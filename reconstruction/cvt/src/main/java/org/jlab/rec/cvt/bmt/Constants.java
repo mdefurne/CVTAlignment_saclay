@@ -97,7 +97,7 @@ public class Constants {
     public static final double isInSectorJitter = 2.0; // 2 deg
 
     public static final int STARTINGLAYR = 1;
-
+	
     public static synchronized void Load() {
         if (areConstantsLoaded) {
             return;

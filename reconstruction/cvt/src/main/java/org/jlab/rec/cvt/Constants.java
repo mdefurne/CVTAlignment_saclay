@@ -353,6 +353,8 @@ public class Constants {
 
     private static double SOLENOIDSCALE = 0;
 
+	public static String ClusteringMode;
+
     public static final void setSolenoidscale(double scale) {
         SOLENOIDSCALE = scale;
     }

@@ -164,6 +164,8 @@ public class CVTReconstruction extends ReconstructionEngine {
         // read configurations set in the yml file
         // ---------------------------------------
 
+    	// Clustering mode for BMT
+    	Constants.ClusteringMode = Optional.ofNullable(this.getEngineConfigString("ClusteringMode")).orElse("ADC");
         // use the alignment constants
         Constants.WithAlignment = Boolean.parseBoolean(Optional.ofNullable(this.getEngineConfigString("WithAlignment")).orElse("false"));
 
@@ -176,6 +178,7 @@ public class CVTReconstruction extends ReconstructionEngine {
         System.out.println( "\n +++ CVT configuration +++\n"+
                             "Use alignment constants: " + Constants.WithAlignment +"\n"+
                             "Fit outward: "+ Constants.FromTargetToCTOF  +"\n" +
+                            "MVT Clustering Mode: "+ Constants.ClusteringMode  +"\n" +
                             "Compute unbiased residuals: " +Constants.ExcludingSite + "\n +++ \n");
 
         // load geometries

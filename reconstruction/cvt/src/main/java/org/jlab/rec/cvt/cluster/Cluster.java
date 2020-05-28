@@ -25,6 +25,7 @@ public class Cluster extends ArrayList<FittedHit> implements Comparable<Cluster>
     private int _Layer;    	 						//	        layer [1,...]
     private int _Id;								//		cluster Id
     private int _StripTmin;
+    private int _StripTmin_second;
     private int _StripTmax;
     private double _Centroid; 							// 		after LC (Lorentz Correction)
     private double _CentroidError;
@@ -41,6 +42,7 @@ public class Cluster extends ArrayList<FittedHit> implements Comparable<Cluster>
     private double _Y;
     private double _YErr;
     private float _Tmin;
+    private float _Tmin_second;
     private float _Tmax;
 
     public Cluster(int detector, int detectortype, int sector, int layer, int cid) {
@@ -50,7 +52,11 @@ public class Cluster extends ArrayList<FittedHit> implements Comparable<Cluster>
         this._Layer = layer;
         this._Id = cid;
         this._Tmin= 10000;
+        this._Tmin_second= 11000;
         this._Tmax=0;
+        this._StripTmin=-1;
+        this._StripTmin_second=-1;
+        this._StripTmax=-1;
     }
 
     /**
@@ -167,9 +173,9 @@ public class Cluster extends ArrayList<FittedHit> implements Comparable<Cluster>
         double weightedStrp = 0;		// Lorentz-angle-corrected energy-weighted strip 
         double weightedStrp0 = 0;		// uncorrected energy-weighted strip 
         double weightedPhi = 0;			// Lorentz-angle-corrected energy-weighted phi of the strip 
-        double weightedPhiErrSq = 0;            // Err^2 on Lorentz-angle-corrected energy-weighted phi of the strip 
+        double weightedPhiErrSq = 0;    // Err^2 on Lorentz-angle-corrected energy-weighted phi of the strip 
         double weightedPhi0 = 0;		// Uncorrected energy-weighted phi of the strip 
-        double weightedPhiErrSq0 = 0;           // Err^2 on uncorrected energy-weighted phi of the strip 
+        double weightedPhiErrSq0 = 0;   // Err^2 on uncorrected energy-weighted phi of the strip 
         double weightedX = 0;			// Energy-weighted x of the strip
         double weightedXErrSq = 0;		// Err^2 on  energy-weighted x of the strip
         double weightedY = 0;			// Energy-weighted y of the strip
@@ -189,16 +195,25 @@ public class Cluster extends ArrayList<FittedHit> implements Comparable<Cluster>
                 FittedHit thehit = this.get(i);
                 // gets the energy value of the strip
                 double strpEn = thehit.get_Strip().get_Edep();
-                if (this._Tmin>thehit.get_Strip().get_Time()) {
+                if (this._Tmin>=thehit.get_Strip().get_Time()) {
+                	this._StripTmin_second=this._StripTmin;
+                	this._Tmin_second=this._Tmin;
                 	this._Tmin=thehit.get_Strip().get_Time();
-                	this._StripTmin=thehit.get_Strip().get_Strip();
+                	this._StripTmin=i;
+                } else {
+                	 if (this._Tmin_second>thehit.get_Strip().get_Time()) {
+                		 this._Tmin_second=thehit.get_Strip().get_Time();
+                     	 this._StripTmin_second=i; 
+                	 }
                 }
                 if (this._Tmax<thehit.get_Strip().get_Time()) {
                 	this._Tmax=thehit.get_Strip().get_Time();
-                	this._StripTmax=thehit.get_Strip().get_Strip();
+                	this._StripTmax=i;
+                	//this._StripTmax=thehit.get_Strip().get_Strip();
                 }
                 int strpNb = -1;
                 int strpNb0 = -1; //before LC
+                totEn+=strpEn;
                 if (this.get_Detector()==0) {
                     // for the SVT the analysis only uses the centroid
                     strpNb = thehit.get_Strip().get_Strip();
@@ -211,50 +226,102 @@ public class Cluster extends ArrayList<FittedHit> implements Comparable<Cluster>
                 }
                 if (this.get_Detector()==1) { 
                     // for the BMT the analysis distinguishes between C and Z type detectors
-                    if (this.get_DetectorType()==0) { // C-detectors
-                        strpNb = thehit.get_Strip().get_Strip();
-                        // for C detector the Z of the centroid is calculated
-                        weightedZ += strpEn * thehit.get_Strip().get_Z();
-                        weightedZErrSq += (thehit.get_Strip().get_ZErr()) * (thehit.get_Strip().get_ZErr());
-                    }
-                    if (this.get_DetectorType()==1) { // Z-detectors
-                        // for Z detectors Larentz-correction is applied to the strip
-                        strpNb = thehit.get_Strip().get_LCStrip();
-                        strpNb0 = thehit.get_Strip().get_Strip();
-                        // for C detectors the phi of the centroid is calculated for the uncorrected and the Lorentz-angle-corrected centroid
-                        weightedPhi += strpEn * thehit.get_Strip().get_Phi();
-                        weightedPhiErrSq += (thehit.get_Strip().get_PhiErr()) * (thehit.get_Strip().get_PhiErr());
-                        weightedPhi0 += strpEn * thehit.get_Strip().get_Phi0();
-                        weightedPhiErrSq0 += (thehit.get_Strip().get_PhiErr0()) * (thehit.get_Strip().get_PhiErr0());
-                    }
+                	if (org.jlab.rec.cvt.Constants.ClusteringMode.equals("ADC")) {
+                		if (this.get_DetectorType()==0) { // C-detectors
+                			strpNb = thehit.get_Strip().get_Strip();
+                			// for C detector the Z of the centroid is calculated
+                			weightedZ += strpEn * thehit.get_Strip().get_Z();
+                			weightedZErrSq += (thehit.get_Strip().get_ZErr()) * (thehit.get_Strip().get_ZErr());
+                		}
+                    	if (this.get_DetectorType()==1) { // Z-detectors
+                    		// for Z detectors Larentz-correction is applied to the strip
+                    		strpNb = thehit.get_Strip().get_LCStrip();
+                    		strpNb0 = thehit.get_Strip().get_Strip();
+                    		// for C detectors the phi of the centroid is calculated for the uncorrected and the Lorentz-angle-corrected centroid
+                    		weightedPhi += strpEn * thehit.get_Strip().get_Phi();
+                    		weightedPhiErrSq += (thehit.get_Strip().get_PhiErr()) * (thehit.get_Strip().get_PhiErr());
+                    		weightedPhi0 += strpEn * thehit.get_Strip().get_Phi0();
+                    		weightedPhiErrSq0 += (thehit.get_Strip().get_PhiErr0()) * (thehit.get_Strip().get_PhiErr0());
+                    	}
+                	}
                 }
 
-                totEn += strpEn;
-                weightedStrp += strpEn * (double) strpNb;
-                weightedStrp0 += strpEn * (double) strpNb0;
-
+                if (this.get_Detector()==0||org.jlab.rec.cvt.Constants.ClusteringMode.equals("ADC"))  {
+                	weightedStrp += strpEn * (double) strpNb;
+                	weightedStrp0 += strpEn * (double) strpNb0;
+                }
+                
                 // getting the max and min strip number in the cluster
                 if (strpNb <= min) {
-                    min = strpNb;
+                	min = strpNb;
                 }
                 if (strpNb >= max) {
-                    max = strpNb;
+                	max = strpNb;
                 }
-                // getting the seed strip which is defined as the strip with the largest deposited energy
+                	// getting the seed strip which is defined as the strip with the largest deposited energy
                 if (strpEn >= Emax) {
-                    Emax = strpEn;
-                    seed = strpNb;
-                    if (this.get_DetectorType()==1) {
-                        seed = strpNb0;
-                    }
+                	Emax = strpEn;
+                	seed = strpNb;
+                	if (this.get_DetectorType()==1) {
+                		seed = strpNb0;
+                	}
                 }
+                
 
             }
-            if (totEn == 0) {
+            if (totEn == 0&&(this.get_Detector()==0||org.jlab.rec.cvt.Constants.ClusteringMode.equals("ADC"))) {
                 System.err.println(" Cluster energy is null .... exit "+this._Detector+" "+this._DetectorType);
                 
                 return;
             }
+            _TotalEnergy = totEn; //We change totEn in case of clustering algo for MVT based on time... However it is more relvant for further MVT studies to keep real totEn
+            
+            if (org.jlab.rec.cvt.Constants.ClusteringMode.equals("Time")&&this.get_Detector()==1) {
+            	  int strpNb = -1;
+                  int strpNb0 = -1; //before LC
+                  double totEn_Time=0;
+                  double strpEn = this.get(this._StripTmin).get_Strip().get_Edep();
+                  totEn_Time+=strpEn;
+            	if (this.get_DetectorType()==0) { // C-detectors
+        			strpNb = this.get(this._StripTmin).get_Strip().get_Strip();
+        			// for C detector the Z of the centroid is calculated
+        			weightedZ = strpEn * this.get(this._StripTmin).get_Strip().get_Z();
+        			weightedZErrSq = strpEn * (this.get(this._StripTmin).get_Strip().get_ZErr()) * (this.get(this._StripTmin).get_Strip().get_ZErr());
+        			weightedStrp += strpEn * (double) strpNb;
+        			if (this._StripTmin_second!=-1) {
+        				strpEn = this.get(this._StripTmin_second).get_Strip().get_Edep();
+        				totEn_Time+=strpEn;
+        				weightedStrp += strpEn * (double) strpNb;
+        				weightedZ += strpEn * this.get(this._StripTmin_second).get_Strip().get_Z();
+            			weightedZErrSq += strpEn * (this.get(this._StripTmin_second).get_Strip().get_ZErr()) * (this.get(this._StripTmin_second).get_Strip().get_ZErr());
+        			}
+        		}
+            	if (this.get_DetectorType()==1) { // Z-detectors
+            		// for Z detectors Larentz-correction is applied to the strip
+            		strpNb = this.get(this._StripTmin).get_Strip().get_LCStrip();
+            		strpNb0 = this.get(this._StripTmin).get_Strip().get_Strip();
+            		weightedStrp += strpEn * (double) strpNb;
+                	weightedStrp0 += strpEn * (double) strpNb0;
+            		// for C detectors the phi of the centroid is calculated for the uncorrected and the Lorentz-angle-corrected centroid
+            		weightedPhi += strpEn * this.get(this._StripTmin).get_Strip().get_Phi();
+            		weightedPhiErrSq += strpEn * (this.get(this._StripTmin).get_Strip().get_PhiErr()) * (this.get(this._StripTmin).get_Strip().get_PhiErr());
+            		weightedPhi0 += strpEn * this.get(this._StripTmin).get_Strip().get_Phi0();
+            		weightedPhiErrSq0 += strpEn * (this.get(this._StripTmin).get_Strip().get_PhiErr0()) * (this.get(this._StripTmin).get_Strip().get_PhiErr0());
+            		if (this._StripTmin_second!=-1) {
+            			strpEn = this.get(this._StripTmin_second).get_Strip().get_Edep();
+            			strpNb = this.get(this._StripTmin_second).get_Strip().get_LCStrip();
+                		strpNb0 = this.get(this._StripTmin_second).get_Strip().get_Strip();
+            			totEn_Time+=strpEn;
+            			weightedStrp += strpEn * (double) strpNb;
+                    	weightedStrp0 += strpEn * (double) strpNb0;
+            			weightedPhi += strpEn * this.get(this._StripTmin_second).get_Strip().get_Phi();
+                		weightedPhiErrSq += strpEn * (this.get(this._StripTmin_second).get_Strip().get_PhiErr()) * (this.get(this._StripTmin_second).get_Strip().get_PhiErr());
+                		weightedPhi0 += strpEn * this.get(this._StripTmin_second).get_Strip().get_Phi0();
+                		weightedPhiErrSq0 += strpEn * (this.get(this._StripTmin_second).get_Strip().get_PhiErr0()) * (this.get(this._StripTmin_second).get_Strip().get_PhiErr0());
+        			}
+            	}
+            	totEn=totEn_Time;
+        	}
 
             this.set_MinStrip(min);
             this.set_MaxStrip(max);
@@ -265,12 +332,12 @@ public class Cluster extends ArrayList<FittedHit> implements Comparable<Cluster>
             stripNumCent0 = weightedStrp0 / totEn;
             //phiCent = geo.LorentzAngleCorr(phiCent0,this.get_Layer());
             phiCent0 = weightedPhi0 / totEn;
-            phiCent = bgeo.LorentzAngleCorr(phiCent0,this.get_Layer());
+            phiCent = bgeo.LorentzAngleCorr(phiCent0,this.get_Layer(), org.jlab.rec.cvt.Constants.ClusteringMode);
             xCent = weightedX / totEn;
             yCent = weightedY / totEn;
             zCent = weightedZ / totEn;
-            phiErrCent = Math.sqrt(weightedPhiErrSq);
-            phiErrCent0 = Math.sqrt(weightedPhiErrSq0);
+            phiErrCent = Math.sqrt(weightedPhiErrSq/totEn);
+            phiErrCent0 = Math.sqrt(weightedPhiErrSq0/totEn);
             xErrCent = Math.sqrt(weightedXErrSq/totEn);
             yErrCent = Math.sqrt(weightedYErrSq/totEn);
             zErrCent = Math.sqrt(weightedZErrSq/totEn);
@@ -280,7 +347,7 @@ public class Cluster extends ArrayList<FittedHit> implements Comparable<Cluster>
             //zErrCent = Math.sqrt(weightedZErrSq);
         }
 
-        _TotalEnergy = totEn;
+        
         _Centroid = stripNumCent;
         if (this.get_Detector()==0) {
         	_X=xCent;
@@ -291,7 +358,7 @@ public class Cluster extends ArrayList<FittedHit> implements Comparable<Cluster>
         	_ZErr=zErrCent;
         	
         }
-        if (this.get_DetectorType() == 1) {
+        if (this.get_DetectorType() == 1&&this.get_Detector()==1) {
             set_Centroid0(stripNumCent0);
             _Phi = phiCent;
             _PhiErr = phiErrCent;
@@ -299,8 +366,14 @@ public class Cluster extends ArrayList<FittedHit> implements Comparable<Cluster>
             _ZErr=Double.NaN;
             set_Phi0(phiCent0);
             set_PhiErr0(phiErrCent0);
+            if (org.jlab.rec.cvt.Constants.ClusteringMode.equals("Time")&&this.size()>1&&this._StripTmin_second==-1) {
+            	 System.err.println(" Bad cluster centroid in time mode .... exit "+this._Detector+" "+this._DetectorType);
+                 
+                 return;
+            }
         }
-        if (this.get_DetectorType() == 0) {
+        
+        if (this.get_DetectorType() == 0&&this.get_Detector()==1) {
         	_X=Double.NaN;
         	_Y=Double.NaN;
         	_XErr=Double.NaN;

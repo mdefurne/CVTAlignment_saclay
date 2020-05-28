@@ -529,21 +529,22 @@ public class Geometry {
     }
     
     
-    public double LorentzAngleCorr(double phi, int layer) {
+    public double LorentzAngleCorr(double phi, int layer, String mode) {
 
         int num_region = (int) (layer + 1) / 2 - 1; // region index (0...2) 0=layers 1&2, 1=layers 3&4, 2=layers 5&6
-        //return phi +( Constants.hDrift/2*Math.tan(Constants.getThetaL()) )/Constants.getCRZRADIUS()[num_region];
-        //return phi + (Constants.hDrift * Math.tan(Constants.getThetaL())) / (Constants.getCRZRADIUS()[num_region]);
-        return phi + (Constants.hStrip2Det * Math.tan(Constants.getThetaL())) / (Constants.getCRZRADIUS()[num_region]);
+        double angle = phi + (Constants.hStrip2Det * Math.tan(Constants.getThetaL())) / (Constants.getCRZRADIUS()[num_region]);
+        if (mode.equals("Time")) angle= phi + (Constants.hStrip2Det/4. * Math.tan(Constants.getThetaL())) / (Constants.getCRZRADIUS()[num_region]);
+        return angle;
     }
+    
     public void SetLorentzAngle(int layer, int sector) {
      	org.jlab.rec.cvt.bmt.Constants.setThetaL(layer, sector); 
     }
     // Correct strip position before clustering
-    public int getLorentzCorrectedZStrip(int sector, int layer, int theMeasuredZStrip) {
+    public int getLorentzCorrectedZStrip(int sector, int layer, int theMeasuredZStrip, String ClusteringMode) {
 
         double theMeasuredPhi = this.CRZStrip_GetPhi(sector, layer, theMeasuredZStrip);
-        double theLorentzCorrectedAngle = this.LorentzAngleCorr(theMeasuredPhi, layer);
+        double theLorentzCorrectedAngle = this.LorentzAngleCorr(theMeasuredPhi, layer, ClusteringMode);
 
         return this.getZStrip(layer, theLorentzCorrectedAngle);
     }
@@ -646,13 +647,8 @@ public class Geometry {
     }
     
     public double getRefinedIntersection(Helix traj, int layer, int sector) {
-    	double rm = 0;
-        if (getZorC(layer)==1) {
-            rm = org.jlab.rec.cvt.bmt.Constants.getCRZRADIUS()[(layer-1) / 2] + org.jlab.rec.cvt.bmt.Constants.hStrip2Det;
-        }
-        else {
-            rm = org.jlab.rec.cvt.bmt.Constants.getCRCRADIUS()[(layer-1) / 2] + org.jlab.rec.cvt.bmt.Constants.hStrip2Det;
-        }
+    	double rm = this.getRadius(layer);
+       
     	double cs=org.jlab.rec.cvt.Constants.KFitterStepsize; 
     	Vector3D inter=traj.getHelixPoint(cs);
     	
@@ -699,11 +695,13 @@ public class Geometry {
     
     public double getRadius(int layer) {
     	double rm=0;
+    	double driftpos=org.jlab.rec.cvt.bmt.Constants.hStrip2Det;
+    	if (org.jlab.rec.cvt.Constants.ClusteringMode.equals("Time")) driftpos=org.jlab.rec.cvt.bmt.Constants.hStrip2Det/4.;
     	 if (getZorC(layer)==1) {
-             rm = org.jlab.rec.cvt.bmt.Constants.getCRZRADIUS()[(layer-1) / 2] + org.jlab.rec.cvt.bmt.Constants.hStrip2Det;
+             rm = org.jlab.rec.cvt.bmt.Constants.getCRZRADIUS()[(layer-1) / 2] + driftpos;
          }
          else {
-             rm = org.jlab.rec.cvt.bmt.Constants.getCRCRADIUS()[(layer-1) / 2] + org.jlab.rec.cvt.bmt.Constants.hStrip2Det;
+             rm = org.jlab.rec.cvt.bmt.Constants.getCRCRADIUS()[(layer-1) / 2] + driftpos;
          }
     	return rm;
     }

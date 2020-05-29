@@ -211,8 +211,8 @@ public class Cluster extends ArrayList<FittedHit> implements Comparable<Cluster>
                 	this._StripTmax=i;
                 	//this._StripTmax=thehit.get_Strip().get_Strip();
                 }
-                int strpNb = -1;
-                int strpNb0 = -1; //before LC
+                int strpNb = 0;
+                int strpNb0 = 0; //before LC
                 totEn+=strpEn;
                 if (this.get_Detector()==0) {
                     // for the SVT the analysis only uses the centroid
@@ -231,7 +231,7 @@ public class Cluster extends ArrayList<FittedHit> implements Comparable<Cluster>
                 			strpNb = thehit.get_Strip().get_Strip();
                 			// for C detector the Z of the centroid is calculated
                 			weightedZ += strpEn * thehit.get_Strip().get_Z();
-                			weightedZErrSq += (thehit.get_Strip().get_ZErr()) * (thehit.get_Strip().get_ZErr());
+                			weightedZErrSq += strpEn * (thehit.get_Strip().get_ZErr()) * (thehit.get_Strip().get_ZErr());
                 		}
                     	if (this.get_DetectorType()==1) { // Z-detectors
                     		// for Z detectors Larentz-correction is applied to the strip
@@ -239,9 +239,9 @@ public class Cluster extends ArrayList<FittedHit> implements Comparable<Cluster>
                     		strpNb0 = thehit.get_Strip().get_Strip();
                     		// for C detectors the phi of the centroid is calculated for the uncorrected and the Lorentz-angle-corrected centroid
                     		weightedPhi += strpEn * thehit.get_Strip().get_Phi();
-                    		weightedPhiErrSq += (thehit.get_Strip().get_PhiErr()) * (thehit.get_Strip().get_PhiErr());
+                    		weightedPhiErrSq += strpEn * (thehit.get_Strip().get_PhiErr()) * (thehit.get_Strip().get_PhiErr());
                     		weightedPhi0 += strpEn * thehit.get_Strip().get_Phi0();
-                    		weightedPhiErrSq0 += (thehit.get_Strip().get_PhiErr0()) * (thehit.get_Strip().get_PhiErr0());
+                    		weightedPhiErrSq0 += strpEn * (thehit.get_Strip().get_PhiErr0()) * (thehit.get_Strip().get_PhiErr0());
                     	}
                 	}
                 }
@@ -277,8 +277,8 @@ public class Cluster extends ArrayList<FittedHit> implements Comparable<Cluster>
             _TotalEnergy = totEn; //We change totEn in case of clustering algo for MVT based on time... However it is more relvant for further MVT studies to keep real totEn
             
             if (org.jlab.rec.cvt.Constants.ClusteringMode.equals("Time")&&this.get_Detector()==1) {
-            	  int strpNb = -1;
-                  int strpNb0 = -1; //before LC
+            	  int strpNb = 0;
+                  int strpNb0 = 0; //before LC
                   double totEn_Time=0;
                   double strpEn = this.get(this._StripTmin).get_Strip().get_Edep();
                   totEn_Time+=strpEn;
@@ -360,6 +360,7 @@ public class Cluster extends ArrayList<FittedHit> implements Comparable<Cluster>
         }
         if (this.get_DetectorType() == 1&&this.get_Detector()==1) {
             set_Centroid0(stripNumCent0);
+            set_Centroid(stripNumCent0);
             _Phi = phiCent;
             _PhiErr = phiErrCent;
             _Z=Double.NaN;

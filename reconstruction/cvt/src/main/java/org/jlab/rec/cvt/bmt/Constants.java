@@ -71,7 +71,7 @@ public class Constants {
     public static double[] ThetaL_grid = new double[405];    //Lorentz angle grid
     public static double[] E_grid = new double[405];         //Electric field value of the grid
     public static double[] B_grid = new double[405];        //Magnetic field value of the grid
-    public static double ThetaL = 0; 						// the Lorentz angle for 5-T B-field
+    public static double[][] ThetaL = new double[NREGIONS*2][3]; 						// the Lorentz angle for 5-T B-field
     public static double emin=0;                          //Emin of the grid
     public static double emax=0;                          //Emax of the grid
     public static double bmax=0;                          //Bmax of the grid
@@ -111,18 +111,23 @@ public class Constants {
 
     }
 
-    public static double getThetaL() {
-        return ThetaL;
+    public static double getThetaL(int layer, int sector) {
+        return ThetaL[layer-1][sector-1];
     }
 
-    public static synchronized void setThetaL(int layer, int sector) {
-        if (org.jlab.rec.cvt.Constants.isCosmicsData() == true) {
-            ThetaL = 0;
-        }
-        else {
-            ThetaL = Math.toRadians(org.jlab.rec.cvt.bmt.Lorentz.GetLorentzAngle(E_DRIFT[layer-1][sector-1],Math.abs(org.jlab.rec.cvt.Constants.getSolenoidscale()*50)));
-        }
-        if (org.jlab.rec.cvt.Constants.getSolenoidscale()<0) ThetaL=-ThetaL; 
+    public static synchronized void setThetaL() {
+    	for (int lay=0; lay<2*NREGIONS; lay++) {
+    		for (int sec=0; sec<3;sec++) {
+    			if (org.jlab.rec.cvt.Constants.isCosmicsData() == true) {
+    				ThetaL[lay][sec] = 0;
+    			}
+    			else {
+    				ThetaL[lay][sec] = Math.toRadians(org.jlab.rec.cvt.bmt.Lorentz.GetLorentzAngle(E_DRIFT[lay][sec],Math.abs(org.jlab.rec.cvt.Constants.getSolenoidscale()*50)));
+    			}
+    			if (org.jlab.rec.cvt.Constants.getSolenoidscale()<0) ThetaL[lay][sec]=-ThetaL[lay][sec]; 
+    			System.out.println("For tile Layer "+(lay+1)+" Sector "+(sec+1)+", the lorentz angle is "+Math.toDegrees(ThetaL[lay][sec]));
+    		}
+    	}
     }
 
     public static double[] getCRZRADIUS() {

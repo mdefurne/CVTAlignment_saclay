@@ -256,39 +256,6 @@ public class Geometry {
         return ClosestStrip;
     }
 
-    /**
-     *
-     * @param layer
-     * @param x x-coordinate of the hit in the lab frame
-     * @param y y-coordinate of the hit in the lab frame
-     * @return the sigma along the beam direction (longitudinal)
-     */
-    public double getSigmaLongit(int layer, double x, double y) { // sigma for C-detector
-
-        int num_region = (int) (layer + 1) / 2 - 1; // region index (0...2) 0=layers 1&2, 1=layers 3&4, 2=layers 5&6
-        //double sigma = Constants.SigmaDrift * Math.sqrt((Math.sqrt(x * x + y * y) - Constants.getCRCRADIUS()[num_region] + Constants.hStrip2Det) / Constants.hDrift);
-        double sigma = Constants.SigmaDrift * ((Math.sqrt(x * x + y * y) - Constants.getCRZRADIUS()[num_region] + Constants.hStrip2Det) / Constants.hDrift / Math.cos(Constants.getThetaL()));
-  
-        return sigma;
-
-    }
-
-    /**
-     *
-     * @param layer
-     * @param x x-coordinate of the hit in the lab frame
-     * @param y y-coordinate of the hit in the lab frame
-     * @return the sigma along in the azimuth direction taking the Lorentz angle
-     * into account
-     */
-    public double getSigmaAzimuth(int layer, double x, double y) { // sigma for Z-detectors
-
-        int num_region = (int) (layer + 1) / 2 - 1; // region index (0...2) 0=layers 1&2, 1=layers 3&4, 2=layers 5&6double Z0=0;
-        double sigma = Constants.SigmaDrift * Math.sqrt((Math.sqrt(x * x + y * y) - Constants.getCRZRADIUS()[num_region] + Constants.hStrip2Det) / Constants.hDrift / Math.cos(Constants.getThetaL()));
-
-        return sigma;
-
-    }
    
     public Vector3D Slope_CVTToDetFrame(int layer, int sector, Vector3D slope) {	
      	Vector3D new_slope = new Vector3D();
@@ -529,22 +496,19 @@ public class Geometry {
     }
     
     
-    public double LorentzAngleCorr(double phi, int layer, String mode) {
+    public double LorentzAngleCorr(double phi, int layer, int sector, String mode) {
 
         int num_region = (int) (layer + 1) / 2 - 1; // region index (0...2) 0=layers 1&2, 1=layers 3&4, 2=layers 5&6
-        double angle = phi + (Constants.hStrip2Det * Math.tan(Constants.getThetaL())) / (Constants.getCRZRADIUS()[num_region]);
-        if (mode.equals("Time")) angle= phi + (Constants.hStrip2Det/4. * Math.tan(Constants.getThetaL())) / (Constants.getCRZRADIUS()[num_region]);
+        double angle = phi + (Constants.hStrip2Det * Math.tan(Constants.getThetaL(layer, sector))) / (Constants.getCRZRADIUS()[num_region]);
+        if (mode.equals("Time")) angle= phi + (Constants.hStrip2Det/4. * Math.tan(Constants.getThetaL(layer, sector))) / (Constants.getCRZRADIUS()[num_region]);
         return angle;
     }
     
-    public void SetLorentzAngle(int layer, int sector) {
-     	org.jlab.rec.cvt.bmt.Constants.setThetaL(layer, sector); 
-    }
     // Correct strip position before clustering
     public int getLorentzCorrectedZStrip(int sector, int layer, int theMeasuredZStrip, String ClusteringMode) {
 
         double theMeasuredPhi = this.CRZStrip_GetPhi(sector, layer, theMeasuredZStrip);
-        double theLorentzCorrectedAngle = this.LorentzAngleCorr(theMeasuredPhi, layer, ClusteringMode);
+        double theLorentzCorrectedAngle = this.LorentzAngleCorr(theMeasuredPhi, layer, sector, ClusteringMode);
 
         return this.getZStrip(layer, theLorentzCorrectedAngle);
     }

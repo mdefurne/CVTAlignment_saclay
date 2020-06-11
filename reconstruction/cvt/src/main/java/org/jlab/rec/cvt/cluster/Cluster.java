@@ -332,7 +332,7 @@ public class Cluster extends ArrayList<FittedHit> implements Comparable<Cluster>
             stripNumCent0 = weightedStrp0 / totEn;
             //phiCent = geo.LorentzAngleCorr(phiCent0,this.get_Layer());
             phiCent0 = weightedPhi0 / totEn;
-            phiCent = bgeo.LorentzAngleCorr(phiCent0,this.get_Layer(), org.jlab.rec.cvt.Constants.ClusteringMode);
+            phiCent = weightedPhi / totEn;
             xCent = weightedX / totEn;
             yCent = weightedY / totEn;
             zCent = weightedZ / totEn;
@@ -361,7 +361,7 @@ public class Cluster extends ArrayList<FittedHit> implements Comparable<Cluster>
         if (this.get_DetectorType() == 1&&this.get_Detector()==1) {
             set_Centroid0(stripNumCent0);
             set_Centroid(stripNumCent0);
-            _Phi = phiCent;
+            _Phi = bgeo.LorentzAngleCorr(phiCent0,this.get_Layer(), this.get_Sector(), org.jlab.rec.cvt.Constants.ClusteringMode);
             _PhiErr = phiErrCent;
             _Z=Double.NaN;
             _ZErr=Double.NaN;

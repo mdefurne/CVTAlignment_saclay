@@ -94,6 +94,7 @@ public class CVTReconstruction extends ReconstructionEngine {
         int newRun = bank.getInt("run", 0);
 
         if (Run != newRun) {
+        	System.out.println("WARNING... new run number detected... downloading new HV constants for BMT");
             this.setRun(newRun);
             this.loadConstants( bank.getInt("run",0) );
         }
@@ -154,8 +155,8 @@ public class CVTReconstruction extends ReconstructionEngine {
     
     public synchronized boolean loadConstants( int run ) {
     	// load BMT HV settings
-        CCDBConstantsLoader.loadHVsettings(new DatabaseConstantProvider( 11, "default"));
-        double a = org.jlab.rec.cvt.bmt.Constants.E_DRIFT[0][0];
+        CCDBConstantsLoader.loadHVsettings(new DatabaseConstantProvider( run, "default"));
+        org.jlab.rec.cvt.bmt.Constants.setThetaL();
         return true;
     }
 

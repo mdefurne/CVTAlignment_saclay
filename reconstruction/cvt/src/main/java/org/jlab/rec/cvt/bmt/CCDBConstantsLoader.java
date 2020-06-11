@@ -290,7 +290,7 @@ public class CCDBConstantsLoader {
 
 	public static void loadHVsettings(DatabaseConstantProvider dbprovider) {
 
-        dbprovider.loadTable("/calibration/mvt/bmt_hv/drift_fullfield");
+        dbprovider.loadTable("/test/mvt/HV_drift");
         dbprovider.loadTable("/calibration/mvt/bmt_hv/drift_midfield");
 		
         dbprovider.disconnect();
@@ -300,9 +300,9 @@ public class CCDBConstantsLoader {
         double [][] HV_DRIFT= new double [NREGIONS*2][3];
         
         for (int i = 0; i<2*NREGIONS; i++) {
-        	HV_DRIFT[i][0]=dbprovider.getDouble("/calibration/mvt/bmt_hv/drift_fullfield/Sector_1", i);
-    		HV_DRIFT[i][1]=dbprovider.getDouble("/calibration/mvt/bmt_hv/drift_fullfield/Sector_2", i);
-    		HV_DRIFT[i][2]=dbprovider.getDouble("/calibration/mvt/bmt_hv/drift_fullfield/Sector_3", i);
+        	HV_DRIFT[i][0]=dbprovider.getDouble("/test/mvt/HV_drift/Sector_1", i);
+    		HV_DRIFT[i][1]=dbprovider.getDouble("/test/mvt/HV_drift/Sector_2", i);
+    		HV_DRIFT[i][2]=dbprovider.getDouble("/test/mvt/HV_drift/Sector_3", i);
         	if (Math.abs(org.jlab.rec.cvt.Constants.getSolenoidscale())<0.8) {
         	 HV_DRIFT[i][0]=dbprovider.getDouble("/calibration/mvt/bmt_hv/drift_midfield/Sector_1", i);
         	 HV_DRIFT[i][1]=dbprovider.getDouble("/calibration/mvt/bmt_hv/drift_midfield/Sector_2", i);
